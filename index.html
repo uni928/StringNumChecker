@@ -706,12 +706,25 @@
       return bytes;
     }
 
-    // 異体字っぽい文字数（CJK互換漢字＋拡張B以降の一部）
-    function countItaiji(str) {
-      const reg = /[\uF900-\uFAFF\u2F800-\u2FA1F]/gu;
-      const matches = str.match(reg);
-      return matches ? matches.length : 0;
+// 修正後（UTF-8 の 1 バイト文字を除外）
+function countItaiji(str) {
+  const reg = /[\uF900-\uFAFF\u2F800-\u2FA1F]/gu;
+  const matches = str.match(reg);
+  if (!matches) return 0;
+
+  let count = 0;
+  for (const ch of matches) {
+    // UTF-8 のバイト数を取得
+    const utf8bytes = new TextEncoder().encode(ch).length;
+
+    // 1バイト文字（ASCII）は除外
+    if (utf8bytes > 1) {
+      count++;
     }
+  }
+  return count;
+}
+
 
     function updateStats() {
       const text = input.value;
