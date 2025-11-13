@@ -469,7 +469,7 @@
         </div>
 
         <div class="helper-row">
-  <div>絵文字と <strong>3 バイト文字</strong> も個別にカウントしています。</div>
+  <div>絵文字と <strong>4 バイト文字</strong> も個別にカウントしています。</div>
   <div class="chip-group">
     <div class="chip chip-accent">
       <span class="chip-dot accent"></span> 日本語向けバイト数表示
@@ -558,10 +558,10 @@
   </div>
 </article>
 
-<!-- 3 バイト文字数 -->
+<!-- 4 バイト文字数 -->
 <article class="metric-card">
   <div class="metric-label">
-    <span>3 バイト文字数</span>
+    <span>4 バイト文字数</span>
     <span class="right">UTF-8 基準</span>
   </div>
   <div class="metric-value">
@@ -569,7 +569,7 @@
     <span class="metric-unit">文字</span>
   </div>
   <div class="metric-note">
-    UTF-8 で 3 バイトになる文字（多くの日本語など）をカウントしています。
+    UTF-8 で 4 バイトになる文字（多くの日本語など）をカウントしています。
   </div>
 </article>
 
@@ -716,12 +716,12 @@ function countEmoji(str) {
   return matches ? matches.length : 0;
 }
 
-// 3 バイト文字数（UTF-8 基準）
+// 4 バイト文字数（UTF-8 基準）
 function count3ByteUtf8(str) {
   let count = 0;
   for (const ch of Array.from(str)) {
     const bytes = getUtf8Bytes(ch);
-    if (bytes === 3) {
+    if (bytes === 4) {
       count++;
     }
   }
