@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>文字数カウンター Luxe</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+  :root {
+    --bg: #050816;
+    --panel-bg: rgba(15, 23, 42, 0.9);
+    --panel-border: rgba(148, 163, 184, 0.35);
+    --accent: #38bdf8;
+    --accent-soft: rgba(56, 189, 248, 0.15);
+    --accent-strong: #0ea5e9;
+    --danger: #fb7185;
+    --text-main: #e5e7eb;
+    --text-sub: #9ca3af;
+    --radius-xl: 16px;
+    --radius-xxl: 22px;
+    --shadow-soft: 0 24px 60px rgba(15, 23, 42, 0.7);
+    --blur: 18px;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background:
+      radial-gradient(circle at 10% 0%, rgba(56, 189, 248, 0.3), transparent 55%),
+      radial-gradient(circle at 90% 100%, rgba(129, 140, 248, 0.25), transparent 55%),
+      radial-gradient(circle at 0% 100%, rgba(248, 250, 252, 0.05), transparent 55%),
+      var(--bg);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Hiragino Sans", "Yu Gothic", system-ui, sans-serif;
+    color: var(--text-main);
+    display: flex;
+    justify-content: center;
+    padding: 32px 16px;
+  }
+
+  .app-shell {
+    width: 100%;
+    max-width: 1080px;
+    backdrop-filter: blur(var(--blur));
+    background: linear-gradient(135deg, rgba(15, 23, 42, 0.9), rgba(15, 23, 42, 0.85));
+    border-radius: var(--radius-xxl);
+    box-shadow: var(--shadow-soft);
+    border: 1px solid rgba(148, 163, 184, 0.4);
+    padding: 22px 22px 24px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .app-shell::before {
+    content: "";
+    position: absolute;
+    inset: -60%;
+    background:
+      radial-gradient(circle at 10% 0%, rgba(56, 189, 248, 0.12), transparent 55%),
+      radial-gradient(circle at 90% 100%, rgba(52, 211, 153, 0.12), transparent 55%);
+    opacity: 0.9;
+    mix-blend-mode: soft-light;
+    pointer-events: none;
+  }
+
+  .app-inner {
+    position: relative;
+    z-index: 1;
+  }
+
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 18px;
+  }
+
+  .title-block {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .logo-orb {
+    width: 34px;
+    height: 34px;
+    border-radius: 999px;
+    background: radial-gradient(circle at 30% 30%, #e0f2fe, #0ea5e9 45%, #0369a1 90%);
+    box-shadow:
+      0 0 0 2px rgba(15, 23, 42, 0.85),
+      0 0 18px rgba(56, 189, 248, 0.8);
+    position: relative;
+  }
+
+  .logo-orb::after {
+    content: "";
+    position: absolute;
+    inset: 8px;
+    border-radius: 999px;
+    border: 2px solid rgba(15, 23, 42, 0.4);
+    mix-blend-mode: soft-light;
+  }
+
+  h1 {
+    font-size: 1.18rem;
+    margin: 0;
+    letter-spacing: 0.04em;
+    display: flex;
+    flex-direction: column;
+  }
+
+  h1 span.main {
+    font-weight: 600;
+  }
+
+  h1 span.sub {
+    font-weight: 400;
+    font-size: 0.75rem;
+    opacity: 0.75;
+  }
+
+  .pill {
+    border-radius: 999px;
+    padding: 5px 10px;
+    font-size: 0.72rem;
+    background: radial-gradient(circle at 0% 0%, rgba(56, 189, 248, 0.4), transparent 70%);
+    border: 1px solid rgba(56, 189, 248, 0.65);
+    color: #e0f2fe;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+  }
+
+  .pill-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #22c55e;
+    box-shadow: 0 0 8px rgba(34, 197, 94, 0.9);
+  }
+
+  .layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+    gap: 18px;
+  }
+
+  @media (max-width: 840px) {
+    .layout {
+      grid-template-columns: minmax(0, 1fr);
+    }
+    body {
+      padding: 18px 10px;
+    }
+  }
+
+  .editor-panel,
+  .metrics-panel {
+    background: linear-gradient(145deg, rgba(15, 23, 42, 0.96), rgba(15, 23, 42, 0.9));
+    border-radius: var(--radius-xl);
+    border: 1px solid rgba(148, 163, 184, 0.35);
+    padding: 14px 14px 12px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .editor-panel::before,
+  .metrics-panel::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 0% 0%, rgba(56, 189, 248, 0.08), transparent 55%);
+    opacity: 0.85;
+    pointer-events: none;
+  }
+
+  .editor-panel > *,
+  .metrics-panel > * {
+    position: relative;
+    z-index: 1;
+  }
+
+  .editor-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 8px;
+  }
+
+  .editor-title {
+    font-size: 0.95rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: #cbd5f5;
+  }
+
+  .editor-subtitle {
+    font-size: 0.75rem;
+    color: var(--text-sub);
+  }
+
+  .status-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 8px;
+    font-size: 0.74rem;
+    color: var(--text-sub);
+  }
+
+  .status-row span strong {
+    color: #e5e7eb;
+  }
+
+  .textarea-wrap {
+    border-radius: 14px;
+    background: radial-gradient(circle at 0% 0%, rgba(15, 23, 42, 0.8), rgba(15, 23, 42, 0.95));
+    border: 1px solid rgba(51, 65, 85, 0.9);
+    padding: 9px 11px 11px;
+    box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.7);
+  }
+
+  textarea {
+    width: 100%;
+    min-height: 260px;
+    resize: vertical;
+    border: none;
+    outline: none;
+    background: transparent;
+    color: var(--text-main);
+    font-size: 0.88rem;
+    line-height: 1.6;
+    font-family: inherit;
+  }
+
+  textarea::placeholder {
+    color: rgba(148, 163, 184, 0.7);
+  }
+
+  .helper-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 6px;
+    font-size: 0.72rem;
+    color: var(--text-sub);
+  }
+
+  .chip-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .chip {
+    border-radius: 999px;
+    border: 1px solid rgba(148, 163, 184, 0.5);
+    padding: 3px 9px;
+    font-size: 0.7rem;
+    cursor: default;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: radial-gradient(circle at 0% 0%, rgba(148, 163, 184, 0.16), transparent 70%);
+  }
+
+  .chip-accent {
+    border-color: rgba(56, 189, 248, 0.7);
+    color: #e0f2fe;
+  }
+
+  .chip-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: rgba(148, 163, 184, 0.8);
+  }
+
+  .chip-dot.accent {
+    background: var(--accent);
+    box-shadow: 0 0 4px rgba(56, 189, 248, 0.8);
+  }
+
+  /* metrics */
+  .metrics-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 10px;
+    margin-bottom: 8px;
+  }
+
+  .metrics-title {
+    font-size: 0.92rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #d1d5db;
+  }
+
+  .metrics-subtitle {
+    font-size: 0.74rem;
+    color: var(--text-sub);
+  }
+
+  .metrics-grid {
+    margin-top: 6px;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 9px;
+  }
+
+  @media (max-width: 600px) {
+    .metrics-grid {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+
+  .metric-card {
+    background: radial-gradient(circle at 0% 0%, rgba(15, 23, 42, 0.9), rgba(15, 23, 42, 0.95));
+    border-radius: 12px;
+    border: 1px solid rgba(51, 65, 85, 0.95);
+    padding: 7px 9px 8px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .metric-card::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 0% 0%, rgba(56, 189, 248, 0.08), transparent 60%);
+    opacity: 0.9;
+    pointer-events: none;
+  }
+
+  .metric-label {
+    font-size: 0.68rem;
+    color: var(--text-sub);
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    margin-bottom: 2px;
+    display: flex;
+    justify-content: space-between;
+    gap: 6px;
+  }
+
+  .metric-label span.right {
+    opacity: 0.75;
+  }
+
+  .metric-value {
+    font-variant-numeric: tabular-nums;
+    font-size: 1.0rem;
+    font-weight: 600;
+    color: #e5e7eb;
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 6px;
+  }
+
+  .metric-unit {
+    font-size: 0.72rem;
+    color: var(--text-sub);
+  }
+
+  .metric-note {
+    font-size: 0.66rem;
+    color: rgba(148, 163, 184, 0.9);
+    margin-top: 1px;
+  }
+
+  .metric-highlight {
+    border-color: rgba(56, 189, 248, 0.9);
+    box-shadow: 0 0 0 1px rgba(8, 47, 73, 0.9);
+    background:
+      radial-gradient(circle at 0% 0%, rgba(56, 189, 248, 0.12), transparent 55%),
+      radial-gradient(circle at 110% 0%, rgba(59, 130, 246, 0.25), transparent 60%);
+  }
+
+  .metric-highlight .metric-value {
+    color: #e0f2fe;
+  }
+
+  .metric-danger .metric-value {
+    color: #fecaca;
+  }
+
+  footer {
+    margin-top: 12px;
+    font-size: 0.7rem;
+    color: rgba(148, 163, 184, 0.95);
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  footer a {
+    color: #bae6fd;
+    text-decoration: none;
+  }
+
+  footer a:hover {
+    text-decoration: underline;
+  }
+
+  .mini-row {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .mini-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 999px;
+    background: rgba(148, 163, 184, 0.8);
+  }
+
+  .mini-dot.accent {
+    background: var(--accent-strong);
+  }
+</style>
+</head>
+<body>
+<div class="app-shell">
+  <div class="app-inner">
+    <header>
+      <div class="title-block">
+        <div class="logo-orb" aria-hidden="true"></div>
+        <h1>
+          <span class="main">文字カウンター Studio</span>
+          <span class="sub">リアルタイムで原稿のボリュームをチェック</span>
+        </h1>
+      </div>
+      <div class="pill">
+        <span class="pill-dot"></span>
+        <span>自動解析中</span>
+      </div>
+    </header>
+
+    <div class="layout">
+      <!-- 左：入力エリア -->
+      <section class="editor-panel" aria-label="テキスト入力エリア">
+        <div class="editor-header">
+          <div>
+            <div class="editor-title">TEXT AREA</div>
+            <div class="editor-subtitle">そのまま貼り付けても、ここで書き始めてもOKです。</div>
+          </div>
+        </div>
+
+        <div class="status-row">
+          <span>カーソル位置：<strong id="cursor-pos">1 行 / 1 桁</strong></span>
+          <span>自動更新：<strong>ON</strong></span>
+        </div>
+
+        <div class="textarea-wrap">
+          <textarea
+            id="input-text"
+            spellcheck="false"
+            placeholder="ここに文章を入力してください。&#13;&#10;ブログ、作文、チャットの下書きなど、何でもどうぞ。&#13;&#10;入力と同時に右側の統計情報が更新されます。"></textarea>
+        </div>
+
+        <div class="helper-row">
+  <div>絵文字と <strong>3 バイト文字</strong> も個別にカウントしています。</div>
+  <div class="chip-group">
+    <div class="chip chip-accent">
+      <span class="chip-dot accent"></span> 日本語向けバイト数表示
+    </div>
+    <div class="chip">
+      <span class="chip-dot"></span> 改行・空白の有無で細かくカウント
+    </div>
+  </div>
+</div>
+      </section>
+
+      <!-- 右：メトリクス -->
+      <section class="metrics-panel" aria-label="文字数・バイト数の統計">
+        <div class="metrics-header">
+          <div>
+            <div class="metrics-title">LIVE STATS</div>
+            <div class="metrics-subtitle">よく使う指標をまとめてチェックできます。</div>
+          </div>
+        </div>
+
+        <div class="metrics-grid">
+          <!-- 総文字数 -->
+          <article class="metric-card metric-highlight">
+            <div class="metric-label">
+              <span>総文字数</span>
+              <span class="right">絵文字・記号を含む</span>
+            </div>
+            <div class="metric-value">
+              <span id="count-total">0</span>
+              <span class="metric-unit">文字</span>
+            </div>
+            <div class="metric-note">サロゲートペアも 1 文字としてカウントします。</div>
+          </article>
+
+          <!-- 改行除く -->
+          <article class="metric-card">
+            <div class="metric-label">
+              <span>改行を除いた文字数</span>
+              <span class="right">LF / CRLF / CR 除外</span>
+            </div>
+            <div class="metric-value">
+              <span id="count-no-newline">0</span>
+              <span class="metric-unit">文字</span>
+            </div>
+            <div class="metric-note">文章の「実質の長さ」を見るときに便利です。</div>
+          </article>
+
+          <!-- 改行・空白除く -->
+          <article class="metric-card">
+            <div class="metric-label">
+              <span>改行・空白を除いた文字数</span>
+              <span class="right">スペース / 全角空白</span>
+            </div>
+            <div class="metric-value">
+              <span id="count-no-space">0</span>
+              <span class="metric-unit">文字</span>
+            </div>
+            <div class="metric-note">文字情報そのものの密度をざっくり確認できます。</div>
+          </article>
+
+          <!-- 行数 -->
+          <article class="metric-card">
+            <div class="metric-label">
+              <span>行数</span>
+              <span class="right">空行もカウント</span>
+            </div>
+            <div class="metric-value">
+              <span id="count-lines">0</span>
+              <span class="metric-unit">行</span>
+            </div>
+            <div class="metric-note">改行コードの種類は自動で判定されます。</div>
+          </article>
+
+          <!-- 絵文字数 -->
+<article class="metric-card metric-danger">
+  <div class="metric-label">
+    <span>絵文字の数</span>
+    <span class="right">顔・記号など</span>
+  </div>
+  <div class="metric-value">
+    <span id="count-emoji">0</span>
+    <span class="metric-unit">個</span>
+  </div>
+  <div class="metric-note">
+    顔文字や記号系の絵文字を中心にカウントする簡易チェックです。
+  </div>
+</article>
+
+<!-- 3 バイト文字数 -->
+<article class="metric-card">
+  <div class="metric-label">
+    <span>3 バイト文字数</span>
+    <span class="right">UTF-8 基準</span>
+  </div>
+  <div class="metric-value">
+    <span id="count-3byte">0</span>
+    <span class="metric-unit">文字</span>
+  </div>
+  <div class="metric-note">
+    UTF-8 で 3 バイトになる文字（多くの日本語など）をカウントしています。
+  </div>
+</article>
+
+          <!-- UTF-8 -->
+          <article class="metric-card">
+            <div class="metric-label">
+              <span>UTF-8 バイト数</span>
+              <span class="right">概算</span>
+            </div>
+            <div class="metric-value">
+              <span id="bytes-utf8">0</span>
+              <span class="metric-unit">byte</span>
+            </div>
+            <div class="metric-note">WebフォームやAPIの文字数制限チェックに。</div>
+          </article>
+
+          <!-- UTF-16 -->
+          <article class="metric-card">
+            <div class="metric-label">
+              <span>UTF-16 バイト数</span>
+              <span class="right">概算</span>
+            </div>
+            <div class="metric-value">
+              <span id="bytes-utf16">0</span>
+              <span class="metric-unit">byte</span>
+            </div>
+            <div class="metric-note">Windows系の内部表現をイメージしたバイト数です。</div>
+          </article>
+
+          <!-- Shift-JIS -->
+          <article class="metric-card">
+            <div class="metric-label">
+              <span>Shift_JIS バイト数</span>
+              <span class="right">おおよそ</span>
+            </div>
+            <div class="metric-value">
+              <span id="bytes-sjis">0</span>
+              <span class="metric-unit">byte</span>
+            </div>
+            <div class="metric-note">
+              ASCII 1byte / 日本語 2byte としておおまかに計算しています。
+            </div>
+          </article>
+
+          <!-- EUC / JIS -->
+          <article class="metric-card">
+            <div class="metric-label">
+              <span>EUC-JP / JIS バイト目安</span>
+              <span class="right">ざっくり</span>
+            </div>
+            <div class="metric-value">
+              <span id="bytes-euc">0</span>
+              <span class="metric-unit">byte</span>
+            </div>
+            <div class="metric-note">
+              Shift_JIS と同じルールで単純に 1byte / 2byte を切り分けています。
+            </div>
+          </article>
+        </div>
+      </section>
+    </div>
+
+    <footer>
+      <div class="mini-row">
+        <span class="mini-dot accent"></span>
+        <span>入力はブラウザ内だけで処理され、保存は行いません。</span>
+      </div>
+      <div class="mini-row">
+        <span class="mini-dot"></span>
+        <span>カウント方法は一般的な基準を元にした簡易版です。</span>
+      </div>
+    </footer>
+  </div>
+</div>
+
+<script>
+  (function () {
+    const input = document.getElementById("input-text");
+    const cursorPosLabel = document.getElementById("cursor-pos");
+
+    const elTotal      = document.getElementById("count-total");
+    const elNoNewline  = document.getElementById("count-no-newline");
+    const elNoSpace    = document.getElementById("count-no-space");
+    const elLines      = document.getElementById("count-lines");
+const elEmoji      = document.getElementById("count-emoji");
+const el3byte      = document.getElementById("count-3byte");
+    const elUtf8       = document.getElementById("bytes-utf8");
+    const elUtf16      = document.getElementById("bytes-utf16");
+    const elSjis       = document.getElementById("bytes-sjis");
+    const elEuc        = document.getElementById("bytes-euc");
+
+    function formatNumber(n) {
+      return n.toLocaleString("ja-JP");
+    }
+
+    // UTF-8 バイト数（TextEncoder があればそれを使用）
+    function getUtf8Bytes(str) {
+      if (window.TextEncoder) {
+        return new TextEncoder().encode(str).length;
+      }
+      // 簡易フォールバック
+      let bytes = 0;
+      for (const ch of str) {
+        const cp = ch.codePointAt(0);
+        if (cp <= 0x7F) bytes += 1;
+        else if (cp <= 0x7FF) bytes += 2;
+        else if (cp <= 0xFFFF) bytes += 3;
+        else bytes += 4;
+      }
+      return bytes;
+    }
+
+    // UTF-16 バイト数（サロゲートペア考慮）
+    function getUtf16Bytes(str) {
+      let bytes = 0;
+      for (const ch of str) {
+        const cp = ch.codePointAt(0);
+        bytes += cp > 0xFFFF ? 4 : 2;
+      }
+      return bytes;
+    }
+
+    // Shift_JIS / EUC-JP / JIS の簡易バイト長
+    function getJapaneseLegacyBytes(str) {
+      let bytes = 0;
+      for (const ch of str) {
+        const cp = ch.codePointAt(0);
+        // 半角カナ（U+FF61〜U+FF9F）は 1byte として扱う
+        if (cp <= 0x7F || (cp >= 0xFF61 && cp <= 0xFF9F)) {
+          bytes += 1;
+        } else {
+          // ざっくり 2byte
+          bytes += 2;
+        }
+      }
+      return bytes;
+    }
+
+// 絵文字数（簡易判定：主に顔・記号などのピクトグラム）
+function countEmoji(str) {
+  // よく使われる絵文字ブロックをざっくりカバー
+  const reg = /[\u{1F300}-\u{1FAFF}\u{1F1E6}-\u{1F1FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu;
+  const matches = str.match(reg);
+  return matches ? matches.length : 0;
+}
+
+// 3 バイト文字数（UTF-8 基準）
+function count3ByteUtf8(str) {
+  let count = 0;
+  for (const ch of Array.from(str)) {
+    const bytes = getUtf8Bytes(ch);
+    if (bytes === 3) {
+      count++;
+    }
+  }
+  return count;
+}
+
+
+
+    function updateStats() {
+      const text = input.value;
+
+      // code point 単位でカウント
+      const chars = Array.from(text); // サロゲートペアをまとめて 1 文字
+      const totalChars = chars.length;
+
+      const noNewlineText = text.replace(/\r\n|\r|\n/g, "");
+      const charsNoNewline = Array.from(noNewlineText).length;
+
+      const noSpaceText = noNewlineText.replace(/[\s\u3000]/g, ""); // 半角/全角スペース
+      const charsNoSpace = Array.from(noSpaceText).length;
+
+      let lines = 0;
+      if (text.length > 0) {
+        lines = text.split(/\r\n|\r|\n/).length;
+      }
+
+      const emojiCount    = countEmoji(text);
+const threeByteCount = count3ByteUtf8(text);
+
+const utf8Bytes  = getUtf8Bytes(text);
+const utf16Bytes = getUtf16Bytes(text);
+const sjisBytes  = getJapaneseLegacyBytes(text);
+const eucBytes   = getJapaneseLegacyBytes(text); // 同じロジックでざっくり
+
+elTotal.textContent      = formatNumber(totalChars);
+elNoNewline.textContent  = formatNumber(charsNoNewline);
+elNoSpace.textContent    = formatNumber(charsNoSpace);
+elLines.textContent      = formatNumber(lines);
+
+elEmoji.textContent      = formatNumber(emojiCount);
+el3byte.textContent      = formatNumber(threeByteCount);
+
+elUtf8.textContent       = formatNumber(utf8Bytes);
+elUtf16.textContent      = formatNumber(utf16Bytes);
+elSjis.textContent       = formatNumber(sjisBytes);
+elEuc.textContent        = formatNumber(eucBytes);
+
+
+      updateCursorPosition();
+    }
+
+    function updateCursorPosition() {
+      const text = input.value;
+      const pos = input.selectionStart || 0;
+
+      // pos までのテキストで行と桁を計算
+      const upToCursor = text.slice(0, pos);
+      const lines = upToCursor.split(/\r\n|\r|\n/);
+      const lineNumber = lines.length; // 1始まり
+      const colNumber = lines[lines.length - 1].length + 1; // 1始まり
+
+      cursorPosLabel.textContent =
+        lineNumber + " 行 / " + colNumber + " 桁";
+    }
+
+    input.addEventListener("input", updateStats);
+    input.addEventListener("click", updateCursorPosition);
+    input.addEventListener("keyup", updateCursorPosition);
+    input.addEventListener("select", updateCursorPosition);
+
+    // 初期表示
+    updateStats();
+  })();
+</script>
+</body>
+</html>
+
